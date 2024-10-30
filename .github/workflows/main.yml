@@ -17,30 +17,22 @@ jobs:
         Set-ExecutionPolicy Bypass -Scope Process -Force
         [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
         iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
-        Start-Sleep -Seconds 30 # تأخير لإعطاء النظام استراحة
-
+        
     - name: Install OpenVPN
-      run: |
-        choco install openvpn -y
-        Start-Sleep -Seconds 60 # تأخير لإعطاء النظام استراحة
-
+      run: choco install openvpn -y
+      
     - name: Download Portmap Configuration
       run: |
         $inputUrl = "${{ github.event.inputs.portmap_config_url }}"
         $fileName = [System.IO.Path]::GetFileName($inputUrl)
         $newUrl = "https://raw.githubusercontent.com/KeroLive/KeroTech/main/config/$fileName"
         Invoke-WebRequest -Uri $newUrl -OutFile "C:\portmap.ovpn"
-        Start-Sleep -Seconds 30 # تأخير
-
+        
     - name: Enable Remote Desktop
-      run: |
-        Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-        Start-Sleep -Seconds 20 # تأخير
-
+      run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+      
     - name: Set RDP Authentication
-      run: |
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
-        Start-Sleep -Seconds 20 # تأخير
+      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 1
 
     - name: Open Local User KeroAdmin
       run: |
@@ -53,45 +45,23 @@ jobs:
         } else {
           Write-Output "User KeroAdmin already exists."
         }
-        Start-Sleep -Seconds 20 # تأخير
 
     - name: RDP Port 4000
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "PortNumber" -Value 4000
         New-NetFirewallRule -DisplayName "RDP Port 4000" -Direction Inbound -Protocol TCP -LocalPort 4000 -Action Allow
-        Start-Sleep -Seconds 30 # تأخير
 
     - name: Restart Remote Desktop Service
-      run: |
-        Restart-Service -Name "TermService" -Force
-        Start-Sleep -Seconds 60 # تأخير
-
-    - name: Set Unlimited RDP Session Time Limit (Group Policy)
-      run: |
-        Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "MaxIdleTime" -Value 0
-        Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "MaxDisconnectTime" -Value 0
-        Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services' -Name "MaxConnectionTime" -Value 0
-        Start-Sleep -Seconds 30 # تأخير
-
-    - name: Set Unlimited RDP Session Time in Registry (Alternative)
-      run: |
-        New-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name 'IdleWinStationPoolCount' -PropertyType DWord -Value 0 -Force
-        New-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name 'MaxIdleTime' -PropertyType DWord -Value 0 -Force
-        New-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name 'MaxDisconnectionTime' -PropertyType DWord -Value 0 -Force
-        Start-Sleep -Seconds 30 # تأخير
+      run: Restart-Service -Name "TermService" -Force
 
     - name: The User Name and Password
       run: |
         Write-Output "User Name: KeroAdmin"
         Write-Output "Password: P@ssw0rd!"
-        Start-Sleep -Seconds 10 # تأخير
 
     - name: Start OpenVPN
       run: |
         Start-Process -NoNewWindow -FilePath "C:\Program Files\OpenVPN\bin\openvpn.exe" -ArgumentList "--config C:\portmap.ovpn" -Wait
-        Start-Sleep -Seconds 60 # تأخير
-
+        
     - name: Enable Terminal Services
-      run: |
-        Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
-        Start-Sleep -Seconds 20 # تأخير
+      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
